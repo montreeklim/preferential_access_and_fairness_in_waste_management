@@ -1,4 +1,3 @@
-
 # Preferential access and fairness in waste management
 This project is based on the theory and application of quadratic optimization models within the context of undesirable facility location problems. All data and code for the associated papers are provided in this repository. 
 
@@ -19,3 +18,5 @@ The code uses some open-source Python packages. The ones that the reader may be 
 - Pyomo, a Python-based optimization modeling language that allows building optimization models.
 - Gurobi, a software well-equiped for solving complex optimization models such as MIQPs.
 - Geopy, which was used for calculating geodesic distances (i.e. shortest distances on the surface of the earth) between two locations.
+
+## To run instances in the paper ...
