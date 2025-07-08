@@ -159,11 +159,22 @@ def optimize_model(m, threads=1, tolerance=5e-3, time_limit=20000, print_sol=Fal
         print()
         print('Objective value:', pyo.value(m.obj))
         print()
+    
+    # print(">>> SolverInformation object:", res.Solver[0])
+    # print(">>> available attrs:", dir(res.Solver[0]))
+    # try:
+    #     print(">>> as dict:", res.Solver[0].to_dict())
+    # except Exception:
+    #     pass
+    # print(">>> solver stats:", getattr(res, 'solver', None))
+    # print(">>> solver.statistics keys:", getattr(res.solver, 'statistics', {}).keys())
 
     # write dictionary with results
     results = {"solution_details":
                    {"assignment": {}, "open_facs": [], "objective_value": pyo.value(m.obj),
-                    "lower_bound": None, "solving_time": res.Solver[0]['Time']},
+                    "lower_bound": None, "solving_time": res.Solver[0]['Wall time']},
+                   # {"assignment": {}, "open_facs": [], "objective_value": pyo.value(m.obj),
+                   #  "lower_bound": None, "solving_time": res.Solver[0]['Time']},
                "model_details":
                    {"users": list(m.users), "facs": list(m.facs), "cap_factor": m.cap_factor.value,
                     "budget_factor": m.budget_factor.value, "cutoff": m.cutoff.value,
@@ -287,7 +298,8 @@ def optimize_postprocessing_model(m, results_mainstep, threads=1, tolerance=0.0,
     # create dictionary for the results after postprocessing
     results = deepcopy(results_mainstep)
     results["solution_details"]["objective_value"] = pyo.value(m.obj)
-    results["solution_details"]["solving_time"] += res.Solver[0]['Time']
+    results["solution_details"]["solving_time"] += res.Solver[0]['Wall time']
+    # results["solution_details"]["solving_time"] += res.Solver[0]['Time']
     for i in m.assignable_users:
         for j in m.assignable_facs:
             if m.x[(i, j)].value > 1e-4:

@@ -10,7 +10,7 @@ from geopy import distance
 import json
 import bz2
 import _pickle as cPickle
-
+from pathlib import Path
 
 # functions for computing travel probabilities
 
@@ -58,27 +58,30 @@ def create_travel_dict(users_and_facs_df, users, facs):
 
 def save_travel_dict(travel_dict, travel_dict_filename, abs_path=None):
     if not abs_path:
-        abs_path = os.getcwd() + "\\own_results"
+        abs_path = os.getcwd() + "/own_results"
     if not os.path.exists(abs_path):
         os.makedirs(abs_path)
-    with bz2.BZ2File(abs_path + "\\" + travel_dict_filename, "w") as f:
+    with bz2.BZ2File(abs_path + "/" + travel_dict_filename, "w") as f:
         cPickle.dump(travel_dict, f)
 
+def _get_data_dir():
+    # assume this file lives in …/preferential_access_…/model/results.py
+    # so parent.parent points to the project root, and data/ is alongside model/
+    return Path(__file__).resolve().parent.parent / "data"
 
-def load_users_and_facs(users_and_facs_filename="users_and_facilities.xlsx", abs_path=None):
-    if not abs_path:
-        abs_path = os.getcwd() + "\\data"
-    users_and_facs_df = pd.read_excel(abs_path + "\\" + users_and_facs_filename)
-    return users_and_facs_df
+def load_users_and_facs(users_and_facs_filename="users_and_facilities.xlsx", abs_path: str = None):
+    data_dir = Path(abs_path) if abs_path else _get_data_dir()
+    filepath = data_dir / users_and_facs_filename
+    return pd.read_excel(filepath)
 
-
-def load_travel_dict(travel_dict_filename="travel_dict.json.pbz2", abs_path=None):
-    if not abs_path:
-        abs_path = os.getcwd() + "\\data"
-    data = bz2.BZ2File(abs_path + "\\" + travel_dict_filename, 'rb')
-    travel_dict = cPickle.load(data)
-    travel_dict = {int(i): {int(j): travel_dict[i][j] for j in travel_dict[i]} for i in travel_dict}
-    return travel_dict
+def load_travel_dict(travel_dict_filename="travel_dict.json.pbz2", abs_path: str = None):
+    data_dir = Path(abs_path) if abs_path else _get_data_dir()
+    filepath = data_dir / travel_dict_filename
+    # using bz2.open is equivalent to BZ2File but a bit cleaner
+    with bz2.open(filepath, 'rb') as f:
+        raw = cPickle.load(f)
+    # convert keys to int
+    return {int(i): {int(j): raw[i][j] for j in raw[i]} for i in raw}
 
 
 def load_input_data(users_and_facs_filename="users_and_facilities.xlsx", travel_dict_filename="travel_dict.json.pbz2",
@@ -89,7 +92,7 @@ def load_input_data(users_and_facs_filename="users_and_facilities.xlsx", travel_
 
 
 def load_results(results_filename, abs_path):
-    with open(abs_path+"\\"+results_filename, 'r') as infile:
+    with open(abs_path+"/"+results_filename, 'r') as infile:
         results_list = json.load(infile)
     for results in results_list:
         results['solution_details']['assignment'] = {int(i): j for (i, j) in
@@ -99,10 +102,10 @@ def load_results(results_filename, abs_path):
 
 def save_results(results_list, results_filename, abs_path):
     if not abs_path:
-        abs_path = os.getcwd() + "\\own_results"
+        abs_path = os.getcwd() + "/own_results"
     if not os.path.exists(abs_path):
         os.makedirs(abs_path)
-    with open(abs_path + "\\" + results_filename, 'w') as outfile:
+    with open(abs_path + "/" + results_filename, 'w') as outfile:
         json.dump(results_list, outfile)
 
 

@@ -478,10 +478,13 @@ def save_greedy_results(users_and_facs_df, travel_dict, instance_dict=None, outp
     if instance_dict is None:
         users = [int(i) for i in users_and_facs_df.index]
         facs = [i for i in users_and_facs_df.index if users_and_facs_df.at[i, 'capacity'] > 0]
-        sizes = [(0.1 * i, 0.1 * i) for i in range(1, 11)]
-        instance_dict = {
-            size: {0: {'users': users[:round(len(users) * size[0])], 'facs': facs[:round(len(facs) * size[1])]}}
-            for size in sizes}
+    else:
+        users = instance_dict['users']
+        facs = instance_dict['facs']
+    sizes = [(0.1 * i, 0.1 * i) for i in range(1, 11)]
+    instance_dict = {
+        size: {0: {'users': users[:round(len(users) * size[0])], 'facs': facs[:round(len(facs) * size[1])]}}
+        for size in sizes}
     naive_results_list = []
     greedy_results_list = []
 
@@ -490,7 +493,7 @@ def save_greedy_results(users_and_facs_df, travel_dict, instance_dict=None, outp
         for instance_nr in instance_dict[instance_size]:
             users = instance_dict[instance_size][instance_nr]['users']
             facs = instance_dict[instance_size][instance_nr]['facs']
-            if cutoff > 0.0 or max(instance_size) <= 0.5:
+            if cutoff > 0.0 or max(instance_size) <= 1:
                 # get the naive results
                 is_feasible, results = solve_model_naively(users_and_facs_df, travel_dict, users, facs, budget_factor,
                                                            strict_assign_to_one, cap_factor, cutoff, max_access,
@@ -501,7 +504,7 @@ def save_greedy_results(users_and_facs_df, travel_dict, instance_dict=None, outp
                                                            post_print_sol, post_log_file, post_preqlinearize)
                 if not is_feasible:
                     print('Infeasible model')
-                    return None
+                    # return None
                 naive_results_list.append(results)
             else:
                 print('An instance with', len(instance_dict[instance_size][0]['users']), 'users and ',
@@ -509,14 +512,14 @@ def save_greedy_results(users_and_facs_df, travel_dict, instance_dict=None, outp
                 print('Skipping this instance.')
 
             # get the greedy results
-            lb = get_lower_bound(users_and_facs_df, travel_dict, users, facs, budget_factor, cap_factor)
-            is_feasible, results = solve_greedily(users_and_facs_df, travel_dict, users, facs, lb, budget_factor,
-                                                  cap_factor, greedy_turnover_factor, greedy_tolerance,
-                                                  greedy_time_limit, greedy_iteration_limit)
-            if not is_feasible:
-                print('The greedy heuristic could not construct a solution')
-                return None
-            greedy_results_list.append(results)
+            if max(instance_size) <= 1.0:
+                lb = get_lower_bound(users_and_facs_df, travel_dict, users, facs, budget_factor, cap_factor)
+                is_feasible, results = solve_greedily(users_and_facs_df, travel_dict, users, facs, lb, budget_factor,
+                                                      cap_factor, greedy_turnover_factor, greedy_tolerance,
+                                                      greedy_time_limit, greedy_iteration_limit)
+                greedy_results_list.append(results)
+    print('Greedy results')
+    print(greedy_results_list)
 
     # write the results
     write_greedy_results(greedy_results_list, naive_results_list, users_and_facs_df, travel_dict, output_filename,
@@ -914,3 +917,4 @@ def save_strict_vs_loose_results(users_and_facs_df, travel_dict, users, facs,
     # write the results
     write_strict_vs_loose_results(strict_results_list, loose_results_list, users_and_facs_df, travel_dict,
                                   output_filename, output_abs_path)
+    
