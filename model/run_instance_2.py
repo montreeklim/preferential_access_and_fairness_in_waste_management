@@ -1,4 +1,4 @@
-from utils2 import *
+from utils import *
 from model import *
 from greedy_heuristic import *
 from results import *
